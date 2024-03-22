@@ -177,15 +177,15 @@ public class Server {
 		}
 	}
 
-	public static class Movie {
-		String id;
-		String originalTitle;
-		String overview;
-		String releaseDate;
-		String tagline;
-		String title;
-		String voteAverage;
-
+	public record Movie(
+		String id,
+		String originalTitle,
+		String overview,
+		String releaseDate,
+		String tagline,
+		String title,
+		String voteAverage
+	) {
 		public String toString() { return GSON.toJson(this).toString(); }
 	}
 
