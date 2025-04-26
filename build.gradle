@@ -57,6 +57,7 @@ task runLeakyServer(type: JavaExec) {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        // not running correctly on instruqt (I think jdk 17 is running)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
