@@ -27,6 +27,7 @@ def sharedJvmArgs = [
     "-XX:+ExitOnOutOfMemoryError",
     "-javaagent:dd-java-agent.jar",
     "-Ddd.profiling.enabled=true",
+    "-Ddd.profiling.heap.histogram.enabled=true",
     "-XX:FlightRecorderOptions=stackdepth=256",
     "-Ddd.logs.injection=true",
     "-Ddd.trace.sample.rate=1",
