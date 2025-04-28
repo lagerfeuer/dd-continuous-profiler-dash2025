@@ -30,6 +30,7 @@ services:
       - 8082:8082
     environment:
       DD_AGENT_HOST: "datadog-agent"
+      DD_RUNTIME_METRICS_ENABLED: "true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/"]
       interval: 10s
