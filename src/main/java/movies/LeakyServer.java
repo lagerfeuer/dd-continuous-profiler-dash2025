@@ -32,7 +32,8 @@ public class LeakyServer {
     
     public static void main(String[] args) {
         port(8082);
-        ipAddress("127.0.0.1");
+        // necessary for docker networking
+        ipAddress("0.0.0.0");
         
         get("/", LeakyServer::homeEndpoint);
         get("/allocate", LeakyServer::allocateEndpoint);

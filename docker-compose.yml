@@ -6,3 +6,15 @@ services:
     - ./mongo-seed:/docker-entrypoint-initdb.d
     ports:
     - 127.0.0.1:27017:27017/tcp
+
+  leaky-api-java:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8082:8082
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

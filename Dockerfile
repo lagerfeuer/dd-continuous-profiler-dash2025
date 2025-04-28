@@ -1,0 +1,24 @@
+FROM eclipse-temurin:17.0.11_9-jdk
+
+WORKDIR /app
+
+# Copy the Gradle files
+COPY build.gradle settings.gradle /app/
+COPY gradle /app/gradle
+COPY gradlew /app/
+
+# Copy the source code
+COPY src /app/src
+COPY movies-v2.json.gz /app/
+
+# Download Datadog Java tracer
+RUN curl -L -o dd-java-agent.jar https://dtdg.co/latest-java-tracer
+
+# Build the application
+RUN ./gradlew build --no-daemon
+
+# Expose the application port
+EXPOSE 8082
+
+# Run the leaky server
+CMD ["./gradlew", "runLeakyServer", "--no-daemon"]
