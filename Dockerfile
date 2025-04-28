@@ -3,7 +3,9 @@ FROM eclipse-temurin:17.0.11_9-jdk
 WORKDIR /app
 
 ENV DD_SERVICE "leaky-api-java"
+ENV DD_ENV "prod"
 LABEL com.datadoghq.tags.service="leaky-api-java"
+LABEL com.datadoghq.tags.env="prod"
 
 # Copy the Gradle files
 COPY build.gradle settings.gradle /app/
