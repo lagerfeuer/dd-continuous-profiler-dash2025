@@ -52,6 +52,7 @@ task runLeakyServer(type: JavaExec) {
     mainClass = 'movies.LeakyServer'
     jvmArgs = sharedJvmArgs + [
         "-Ddd.service=leaky-api-java",
+        "-Ddd.profiling.ddprof.liveheap.enabled=true",
     ]
 }
 
