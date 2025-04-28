@@ -24,6 +24,7 @@ processResources {
 // Shared JVM arguments for all tasks
 def sharedJvmArgs = [
     "-Xmx1g",
+    "-XX:+ExitOnOutOfMemoryError",
     "-javaagent:dd-java-agent.jar",
     "-Ddd.profiling.enabled=true",
     "-XX:FlightRecorderOptions=stackdepth=256",
