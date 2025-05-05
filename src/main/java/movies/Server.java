@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -37,11 +38,17 @@ import spark.Request;
 import spark.Response;
 
 public class Server {
+	private static HashMap<Request, Integer> REQUEST_METRICS = new HashMap<Request, Integer>();
 	private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
 	private static final Supplier<List<Movie>> MOVIES = cache(Server::loadMovies);
 	private static final Supplier<List<Credit>> CREDITS = Server::loadCredits;
+	private static final Supplier<List<MovieWithCredits>> MOVIES_WITH_CREDITS = cache(() -> 
+		MOVIES.get().stream()
+			.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)))
+			.toList()
+	);
 	// CREDITS_BY_MOVIE_ID goes in here!
 
 	public static void main(String[] args) {
@@ -62,20 +69,32 @@ public class Server {
 		LOG.info("Running version " + (version != null ? version.toLowerCase() : "(not set)") + " with pid " + ProcessHandle.current().pid());
 	}
 
+	private static void collectMetrics(Request req) {
+		var count = REQUEST_METRICS.get(req);
+		if (count == null) {
+			count = 1;
+		} else {
+			count++;
+		}
+		REQUEST_METRICS.put(req, count);
+	}
+
 	private static Object randomMovieEndpoint(Request req, Response res) {
+		collectMetrics(req);
 		return replyJSON(res, MOVIES.get().get(new Random().nextInt(MOVIES.get().size())));
 	}
 
 	private static Object creditsEndpoint(Request req, Response res) {
-		var movies = MOVIES.get().stream();
 		var query = req.queryParamOrDefault("q", req.queryParams("query"));
+		var moviesWithCredits = MOVIES_WITH_CREDITS.get();
 
 		if (query != null) {
 			var p = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
-			movies = movies.filter(m -> m.title != null && p.matcher(m.title).find());
+			moviesWithCredits = moviesWithCredits.stream()
+				.filter(m -> m.movie().title != null && p.matcher(m.movie().title).find())
+				.toList();
 		}
 
-		var moviesWithCredits = movies.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)));
 		return replyJSON(res, moviesWithCredits);
 	}
 
