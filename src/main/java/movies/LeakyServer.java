@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.LinkedList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -38,18 +39,16 @@ import spark.Request;
 import spark.Response;
 
 public class LeakyServer {
-	private static HashMap<Request, Integer> REQUEST_METRICS = new HashMap<Request, Integer>();
+	private static List<String> REQUEST_METRICS = new LinkedList<String>();
 	private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 	private static final String MONGO_URI = System.getenv("MONGO_URI");
 
 	private static final Supplier<List<Movie>> MOVIES = cache(LeakyServer::loadMovies);
 	private static final Supplier<List<Credit>> CREDITS = cache(LeakyServer::loadCredits);
-	private static final Supplier<List<MovieWithCredits>> MOVIES_WITH_CREDITS = cache(() -> 
-		MOVIES.get().stream()
+	private static final Supplier<List<MovieWithCredits>> MOVIES_WITH_CREDITS = cache(() -> MOVIES.get().stream()
 			.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)))
-			.toList()
-	);
+			.toList());
 	// CREDITS_BY_MOVIE_ID goes in here!
 
 	public static void main(String[] args) {
@@ -67,17 +66,23 @@ public class LeakyServer {
 		CREDITS.get();
 
 		var version = System.getProperty("dd.version");
-		LOG.info("Running version " + (version != null ? version.toLowerCase() : "(not set)") + " with pid " + ProcessHandle.current().pid());
+		LOG.info("Running version " + (version != null ? version.toLowerCase() : "(not set)") + " with pid "
+				+ ProcessHandle.current().pid());
 	}
 
 	private static void collectMetrics(Request req) {
-		var count = REQUEST_METRICS.get(req);
-		if (count == null) {
-			count = 1;
-		} else {
-			count++;
-		}
-		REQUEST_METRICS.put(req, count);
+		var req_str = new String("body: " + req.body() 
+				+ " params: " + req.params().toString() 
+				+ " headers: " + req.headers().toString() 
+				+ " url: " + req.url() 
+				+ " queryParams: " + req.queryParams().toString() + req.queryParams("q")
+				+ " attributes: " + req.attributes().toString()
+				+ " matchedPath: " + req.matchedPath());
+		var now = new java.util.Date();
+		var msg = "Saw " + req_str + " at: " + now;
+		LOG.info("msg: " + msg + " " + msg.length());
+		LOG.info("Stored requests " + REQUEST_METRICS.size());
+		REQUEST_METRICS.add(msg);
 	}
 
 	private static Object randomMovieEndpoint(Request req, Response res) {
@@ -93,8 +98,8 @@ public class LeakyServer {
 		if (query != null) {
 			var p = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
 			moviesWithCredits = moviesWithCredits.stream()
-				.filter(m -> m.movie().title != null && p.matcher(m.movie().title).find())
-				.toList();
+					.filter(m -> m.movie().title != null && p.matcher(m.movie().title).find())
+					.toList();
 		}
 
 		return replyJSON(res, moviesWithCredits);
@@ -114,8 +119,7 @@ public class LeakyServer {
 
 		var numberMatched = selectedMovies.size();
 		var statsForMovies = selectedMovies.stream().map(movie -> crewCountForMovie(creditsForMovie(movie)));
-		var aggregatedStats =
-			statsForMovies
+		var aggregatedStats = statsForMovies
 				.flatMap(countMap -> countMap.entrySet().stream())
 				.collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.summingLong(Map.Entry::getValue)));
 
@@ -128,8 +132,9 @@ public class LeakyServer {
 
 	private static Map<CrewRole, Long> crewCountForMovie(List<Credit> credits) {
 		var credit = credits != null ? credits.get(0) : null;
-		return credit != null ?
-			credit.crewRole.stream().collect(Collectors.groupingBy(CrewRole::parseRole, Collectors.counting())) : Map.of();
+		return credit != null
+				? credit.crewRole.stream().collect(Collectors.groupingBy(CrewRole::parseRole, Collectors.counting()))
+				: Map.of();
 	}
 
 	private static Object moviesEndpoint(Request req, Response res) {
@@ -138,7 +143,8 @@ public class LeakyServer {
 		movies = sortByDescReleaseDate(movies);
 		var query = req.queryParamOrDefault("q", req.queryParams("query"));
 		if (query != null) {
-			movies = movies.stream().filter(m -> m.title.toUpperCase().matches(".*" + query.toUpperCase() + ".*")).toList();
+			movies = movies.stream().filter(m -> m.title.toUpperCase().matches(".*" + query.toUpperCase() + ".*"))
+					.toList();
 		}
 		return replyJSON(res, movies);
 	}
@@ -174,7 +180,10 @@ public class LeakyServer {
 		return result;
 	}
 
-	private static Object replyJSON(Response res, Stream<?> data) { return replyJSON(res, data.toList()); }
+	private static Object replyJSON(Response res, Stream<?> data) {
+		return replyJSON(res, data.toList());
+	}
+
 	private static Object replyJSON(Response res, Object data) {
 		res.type("application/json");
 		return GSON.toJson(data);
@@ -182,11 +191,11 @@ public class LeakyServer {
 
 	private static List<Movie> loadMovies() {
 		try (
-			var is = ClassLoader.getSystemResourceAsStream("movies-v2.json.gz");
-			var gzis = new GZIPInputStream(is);
-			var reader = new InputStreamReader(gzis)
-		) {
-			return GSON.fromJson(reader, new TypeToken<List<Movie>>() {}.getType());
+				var is = ClassLoader.getSystemResourceAsStream("movies-v2.json.gz");
+				var gzis = new GZIPInputStream(is);
+				var reader = new InputStreamReader(gzis)) {
+			return GSON.fromJson(reader, new TypeToken<List<Movie>>() {
+			}.getType());
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to load movie data", e);
 		}
@@ -194,23 +203,24 @@ public class LeakyServer {
 
 	private static List<Credit> loadCredits() {
 		try (
-			var mongoClient = MongoClients.create(MONGO_URI)
-		) {
+				var mongoClient = MongoClients.create(MONGO_URI)) {
 			var creditsCollection = mongoClient.getDatabase("moviesDB").getCollection("credits");
-			return StreamSupport.stream(creditsCollection.find().batchSize(5_000).map(Credit::new).spliterator(), false).toList();
+			return StreamSupport.stream(creditsCollection.find().batchSize(5_000).map(Credit::new).spliterator(), false)
+					.toList();
 		}
 	}
 
 	public record Movie(
-		String id,
-		String originalTitle,
-		String overview,
-		String releaseDate,
-		String tagline,
-		String title,
-		String voteAverage
-	) {
-		public String toString() { return GSON.toJson(this).toString(); }
+			String id,
+			String originalTitle,
+			String overview,
+			String releaseDate,
+			String tagline,
+			String title,
+			String voteAverage) {
+		public String toString() {
+			return GSON.toJson(this).toString();
+		}
 	}
 
 	public static class Credit {
@@ -234,13 +244,15 @@ public class LeakyServer {
 			return matcher.group(1);
 		}
 	}
-	public record MovieWithCredits(Movie movie, List<Credit> credits) { }
+
+	public record MovieWithCredits(Movie movie, List<Credit> credits) {
+	}
 
 	public enum CrewRole {
 		Director, Writer, Screenplay, Editor, Animation, Other;
 
-		public static final Map<String, CrewRole> ROLES_MAP =
-			Arrays.stream(CrewRole.class.getEnumConstants()).collect(Collectors.toMap(CrewRole::toString, Function.identity()));
+		public static final Map<String, CrewRole> ROLES_MAP = Arrays.stream(CrewRole.class.getEnumConstants())
+				.collect(Collectors.toMap(CrewRole::toString, Function.identity()));
 
 		public static CrewRole parseRole(String inputRole) {
 			try {
@@ -251,7 +263,11 @@ public class LeakyServer {
 			}
 		}
 	}
-	public record StatsResult(int matchedMovies, Map<CrewRole, Long> crewCount) { }
 
-	private static <T> Supplier<T> cache(Supplier<T> method) { return Suppliers.memoize(method); }
+	public record StatsResult(int matchedMovies, Map<CrewRole, Long> crewCount) {
+	}
+
+	private static <T> Supplier<T> cache(Supplier<T> method) {
+		return Suppliers.memoize(method);
+	}
 }
