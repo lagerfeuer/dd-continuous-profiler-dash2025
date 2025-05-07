@@ -43,3 +43,14 @@ services:
       - datadog-agent
       - movies-api-mongo
     restart: always
+
+  loadgen:
+    build:
+      context: ./vegeta
+    # inherit the default network, so "leaky-api-java" DNS works
+    depends_on:
+      - leaky-api-java
+#    environment:
+    # if you want to override the target URL:
+    # - TARGET_URL=http://leaky-api-java:8082/movies
+    # no need to specify command—our ENTRYPOINT script fires load-gen-leak
