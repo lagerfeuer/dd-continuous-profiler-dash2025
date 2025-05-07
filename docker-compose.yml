@@ -39,4 +39,5 @@ services:
       retries: 3
     depends_on:
       - datadog-agent
+      - movies-api-mongo
     restart: always
