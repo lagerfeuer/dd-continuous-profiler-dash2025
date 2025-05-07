@@ -28,15 +28,15 @@ services:
       context: .
       dockerfile: Dockerfile.intro
     ports:
-      - 8080:8080
+      - 8085:8085
     environment:
       DD_AGENT_HOST: "datadog-agent"
       DD_RUNTIME_METRICS_ENABLED: "true"
       DD_TAGS: ${DD_TAGS}
       MONGO_URI: mongodb://movies-api-mongo:27017
-      MOVIES_API_PORT: 8080
+      MOVIES_API_PORT: 8085
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8085/"]
       interval: 10s
       timeout: 5s
       retries: 3

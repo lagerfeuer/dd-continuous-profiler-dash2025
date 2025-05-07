@@ -44,7 +44,7 @@ function load-gen-intro() {
     # make sure no other vegeta background tasks are already being run to avoid resource starvation
 #    set +m
 #    pkill -f vegeta &> /dev/null
-    echo "GET http://intro-movies-api-java:8080/credits?q=and" | vegeta -cpus 1 attack -duration=0 -rate=1 -max-workers=1 &
+    echo "GET http://intro-movies-api-java:8085/credits?q=and" | vegeta -cpus 1 attack -duration=0 -rate=1 -max-workers=1 &
     tail -f /dev/null
 }
 
