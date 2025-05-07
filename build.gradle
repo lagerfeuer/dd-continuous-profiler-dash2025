@@ -58,6 +58,17 @@ task runServer(type: JavaExec) {
     ]
 }
 
+// Task for running the timeline movies-api-java server
+task runTimelineServer(type: JavaExec) {
+    group = 'application'
+    description = 'Runs the timeline movies-api-java server'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'movies.Server'
+    jvmArgs = sharedJvmArgs + [
+            "-Ddd.service=movies-api-java-timeline",
+    ]
+}
+
 // Task for running the leaky server
 task runLeakyServer(type: JavaExec) {
     group = 'application'

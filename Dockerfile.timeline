@@ -26,4 +26,4 @@ RUN ./gradlew build --no-daemon
 EXPOSE 8083
 
 # Run the leaky server
-CMD ["./gradlew", "runServer", "--no-daemon"]
+CMD ["./gradlew", "runTimelineServer", "--no-daemon"]
