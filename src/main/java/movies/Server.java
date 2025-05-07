@@ -43,7 +43,7 @@ public class Server {
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
 	private static final Supplier<List<Movie>> MOVIES = cache(Server::loadMovies);
-	private static final Supplier<List<Credit>> CREDITS = Server::loadCredits;
+	private static final Supplier<List<Credit>> CREDITS = cache(Server::loadCredits);
 	private static final Supplier<List<MovieWithCredits>> MOVIES_WITH_CREDITS = cache(() -> 
 		MOVIES.get().stream()
 			.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)))

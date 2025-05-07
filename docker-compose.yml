@@ -5,7 +5,7 @@ services:
     volumes:
     - ./mongo-seed:/docker-entrypoint-initdb.d
     ports:
-    - 127.0.0.1:27017:27017/tcp
+    - 27017:27017
 
   datadog-agent:
     image: datadog/agent:latest
@@ -33,6 +33,7 @@ services:
       DD_AGENT_HOST: "datadog-agent"
       DD_RUNTIME_METRICS_ENABLED: "true"
       DD_TAGS: ${DD_TAGS}
+      MONGO_URI: mongodb://movies-api-mongo:27017
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/"]
       interval: 10s
