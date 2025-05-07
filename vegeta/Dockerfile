@@ -13,5 +13,6 @@ RUN wget -qO /tmp/vegeta.tar.gz \
  && rm /tmp/vegeta.tar.gz
 
 COPY load-gen-leak.sh /usr/local/bin/load-gen-leak.sh
+COPY targets.http /usr/local/targets.http
 
 ENTRYPOINT ["/usr/local/bin/load-gen-leak.sh"]

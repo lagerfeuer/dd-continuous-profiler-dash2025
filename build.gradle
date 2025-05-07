@@ -37,6 +37,17 @@ def sharedJvmArgs = [
 ]
 
 // Task for running the main movies-api-java server
+task runIntroServer(type: JavaExec) {
+    group = 'application'
+    description = 'Runs the intro-movies-api-java server (first part of profiling lab)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'movies.IntroServer'
+    jvmArgs = sharedJvmArgs + [
+            "-Ddd.service=intro-movies-api-java",
+    ]
+}
+
+// Task for running the main movies-api-java server
 task runServer(type: JavaExec) {
     group = 'application'
     description = 'Runs the movies-api-java server (main api service profiling demos)'

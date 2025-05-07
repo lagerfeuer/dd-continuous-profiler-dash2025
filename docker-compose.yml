@@ -23,10 +23,54 @@ services:
     expose:
       - "8126"
 
+  intro-movies-api-java:
+    build:
+      context: .
+      dockerfile: Dockerfile.intro
+    ports:
+      - 8080:8080
+    environment:
+      DD_AGENT_HOST: "datadog-agent"
+      DD_RUNTIME_METRICS_ENABLED: "true"
+      DD_TAGS: ${DD_TAGS}
+      MONGO_URI: mongodb://movies-api-mongo:27017
+      MOVIES_API_PORT: 8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - datadog-agent
+      - movies-api-mongo
+    restart: always
+
+  movies-api-java:
+    build:
+      context: .
+      dockerfile: Dockerfile.movies
+    ports:
+      - 8081:8081
+    environment:
+      DD_AGENT_HOST: "datadog-agent"
+      DD_RUNTIME_METRICS_ENABLED: "true"
+      DD_TAGS: ${DD_TAGS}
+      MONGO_URI: mongodb://movies-api-mongo:27017
+      MOVIES_API_PORT: 8081
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - datadog-agent
+      - movies-api-mongo
+    restart: always
+
   leaky-api-java:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.leaky
     ports:
       - 8082:8082
     environment:
@@ -34,6 +78,7 @@ services:
       DD_RUNTIME_METRICS_ENABLED: "true"
       DD_TAGS: ${DD_TAGS}
       MONGO_URI: mongodb://movies-api-mongo:27017
+      MOVIES_API_PORT: 8082
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/"]
       interval: 10s
@@ -44,13 +89,58 @@ services:
       - movies-api-mongo
     restart: always
 
-  loadgen:
+  movies-api-java-timeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.timeline
+    ports:
+      - 8083:8083
+    environment:
+      DD_AGENT_HOST: "datadog-agent"
+      DD_RUNTIME_METRICS_ENABLED: "true"
+      DD_TAGS: ${DD_TAGS}
+      MONGO_URI: mongodb://movies-api-mongo:27017
+      MOVIES_API_PORT: 8083
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - datadog-agent
+      - movies-api-mongo
+    restart: always
+
+  loadgen-leak:
     build:
       context: ./vegeta
-    # inherit the default network, so "leaky-api-java" DNS works
     depends_on:
       - leaky-api-java
-#    environment:
+    environment:
     # if you want to override the target URL:
-    # - TARGET_URL=http://leaky-api-java:8082/movies
-    # no need to specify command—our ENTRYPOINT script fires load-gen-leak
+     - TARGET_URL=http://leaky-api-java:8082/movies
+     - LOAD_GEN_MODE=1
+
+  loadgen-movies-api:
+    build:
+      context: ./vegeta
+    depends_on:
+      - movies-api-java
+    environment:
+      - LOAD_GEN_MODE=2
+
+  loadgen-timeline:
+    build:
+      context: ./vegeta
+    depends_on:
+      - movies-api-java-timeline
+    environment:
+      - LOAD_GEN_MODE=3
+
+  loadgen-movies-api-intro:
+    build:
+      context: ./vegeta
+    depends_on:
+      - intro-movies-api-java
+    environment:
+      - LOAD_GEN_MODE=4

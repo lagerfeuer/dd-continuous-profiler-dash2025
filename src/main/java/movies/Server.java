@@ -41,6 +41,7 @@ public class Server {
 	private static HashMap<Request, Integer> REQUEST_METRICS = new HashMap<Request, Integer>();
 	private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+	private static final String MONGO_URI = System.getenv("MONGO_URI");
 
 	private static final Supplier<List<Movie>> MOVIES = cache(Server::loadMovies);
 	private static final Supplier<List<Credit>> CREDITS = cache(Server::loadCredits);
@@ -49,11 +50,12 @@ public class Server {
 			.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)))
 			.toList()
 	);
+	private static final int MOVIES_API_PORT = Integer.parseInt(System.getenv("MOVIES_API_PORT"));
 	// CREDITS_BY_MOVIE_ID goes in here!
 
 	public static void main(String[] args) {
-		port(8081);
-		ipAddress("127.0.0.1");
+		port(MOVIES_API_PORT);
+		ipAddress("0.0.0.0");
 		get("/", Server::randomMovieEndpoint);
 		get("/credits", Server::creditsEndpoint);
 		get("/movies", Server::moviesEndpoint);
@@ -189,7 +191,7 @@ public class Server {
 
 	private static List<Credit> loadCredits() {
 		try (
-			var mongoClient = MongoClients.create()
+			var mongoClient = MongoClients.create(MONGO_URI)
 		) {
 			var creditsCollection = mongoClient.getDatabase("moviesDB").getCollection("credits");
 			return StreamSupport.stream(creditsCollection.find().batchSize(5_000).map(Credit::new).spliterator(), false).toList();

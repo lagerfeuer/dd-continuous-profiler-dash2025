@@ -37,14 +37,14 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-public class LeakyServer {
+public class IntroServer {
 	private static HashMap<Request, Integer> REQUEST_METRICS = new HashMap<Request, Integer>();
 	private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
-	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+	private static final Logger LOG = LoggerFactory.getLogger(IntroServer.class);
 	private static final String MONGO_URI = System.getenv("MONGO_URI");
 
-	private static final Supplier<List<Movie>> MOVIES = cache(LeakyServer::loadMovies);
-	private static final Supplier<List<Credit>> CREDITS = cache(LeakyServer::loadCredits);
+	private static final Supplier<List<Movie>> MOVIES = cache(IntroServer::loadMovies);
+	private static final Supplier<List<Credit>> CREDITS = cache(IntroServer::loadCredits);
 	private static final Supplier<List<MovieWithCredits>> MOVIES_WITH_CREDITS = cache(() -> 
 		MOVIES.get().stream()
 			.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)))
@@ -55,12 +55,12 @@ public class LeakyServer {
 
 	public static void main(String[] args) {
 		port(MOVIES_API_PORT);
-		ipAddress("0.0.0.0");// Required for docker
-		get("/", LeakyServer::randomMovieEndpoint);
-		get("/credits", LeakyServer::creditsEndpoint);
-		get("/movies", LeakyServer::moviesEndpoint);
-		get("/old-movies", LeakyServer::oldMoviesEndpoint);
-		get("/stats", LeakyServer::statsEndpoint);
+		ipAddress("0.0.0.0");
+		get("/", IntroServer::randomMovieEndpoint);
+		get("/credits", IntroServer::creditsEndpoint);
+		get("/movies", IntroServer::moviesEndpoint);
+		get("/old-movies", IntroServer::oldMoviesEndpoint);
+		get("/stats", IntroServer::statsEndpoint);
 		exception(Exception.class, (exception, request, response) -> exception.printStackTrace());
 
 		// Warm these up at application start
@@ -87,7 +87,6 @@ public class LeakyServer {
 	}
 
 	private static Object creditsEndpoint(Request req, Response res) {
-		collectMetrics(req);
 		var query = req.queryParamOrDefault("q", req.queryParams("query"));
 		var moviesWithCredits = MOVIES_WITH_CREDITS.get();
 
@@ -102,7 +101,6 @@ public class LeakyServer {
 	}
 
 	private static synchronized Object statsEndpoint(Request req, Response res) {
-		collectMetrics(req);
 		var movies = MOVIES.get().stream();
 		var query = req.queryParamOrDefault("q", req.queryParams("query"));
 
@@ -134,7 +132,6 @@ public class LeakyServer {
 	}
 
 	private static Object moviesEndpoint(Request req, Response res) {
-		collectMetrics(req);
 		var movies = MOVIES.get();
 		movies = sortByDescReleaseDate(movies);
 		var query = req.queryParamOrDefault("q", req.queryParams("query"));
@@ -157,7 +154,6 @@ public class LeakyServer {
 	}
 
 	private static Object oldMoviesEndpoint(Request req, Response res) {
-		collectMetrics(req);
 		var year = req.queryParamOrDefault("year", "2010");
 		var limit = Integer.valueOf(req.queryParamOrDefault("n", "10"));
 
