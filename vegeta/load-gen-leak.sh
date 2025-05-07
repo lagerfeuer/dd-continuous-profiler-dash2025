@@ -59,7 +59,7 @@ elif [ "$LOAD_GEN_MODE" -eq 3 ]; then
   load-gen-timeline
 elif [ "$LOAD_GEN_MODE" -eq 4 ]; then
   echo "Variable is 4, running load gen intro"
-  load-gen-timeline
+  load-gen-intro
 else
   echo "Variable is not a known mode (1,2,3, or 4) is: $LOAD_GEN_MODE"
 fi
