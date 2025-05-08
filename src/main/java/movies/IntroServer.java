@@ -45,11 +45,6 @@ public class IntroServer {
 
 	private static final Supplier<List<Movie>> MOVIES = cache(IntroServer::loadMovies);
 	private static final Supplier<List<Credit>> CREDITS = cache(IntroServer::loadCredits);
-	private static final Supplier<List<MovieWithCredits>> MOVIES_WITH_CREDITS = cache(() -> 
-		MOVIES.get().stream()
-			.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)))
-			.toList()
-	);
 	private static final int MOVIES_API_PORT = Integer.parseInt(System.getenv("MOVIES_API_PORT"));
 	// CREDITS_BY_MOVIE_ID goes in here!
 
@@ -87,16 +82,15 @@ public class IntroServer {
 	}
 
 	private static Object creditsEndpoint(Request req, Response res) {
+		var movies = MOVIES.get().stream();
 		var query = req.queryParamOrDefault("q", req.queryParams("query"));
-		var moviesWithCredits = MOVIES_WITH_CREDITS.get();
 
 		if (query != null) {
 			var p = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
-			moviesWithCredits = moviesWithCredits.stream()
-				.filter(m -> m.movie().title != null && p.matcher(m.movie().title).find())
-				.toList();
+			movies = movies.filter(m -> m.title != null && p.matcher(m.title).find());
 		}
 
+		var moviesWithCredits = movies.map(movie -> new MovieWithCredits(movie, creditsForMovie(movie)));
 		return replyJSON(res, moviesWithCredits);
 	}
 
