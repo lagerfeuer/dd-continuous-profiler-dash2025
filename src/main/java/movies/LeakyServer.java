@@ -55,7 +55,7 @@ class Metrics {
 				+ " attributes: " + req.attributes().toString()
 				+ " matchedPath: " + req.matchedPath());
 		this.date = new Date();
-		this.metadata = "x".repeat(1000);
+		this.metadata = "x".repeat(1_000_000);
 	}
 }
 

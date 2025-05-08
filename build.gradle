@@ -27,7 +27,6 @@ def sharedJvmArgs = [
     "-XX:+ExitOnOutOfMemoryError",
     "-javaagent:dd-java-agent.jar",
     "-Ddd.profiling.enabled=true",
-    "-Ddd.profiling.upload.period=10", // upload every 10s to see data faster
     "-Ddd.profiling.heap.histogram.enabled=true",
     "-XX:FlightRecorderOptions=stackdepth=256",
     "-Ddd.logs.injection=true",
@@ -44,6 +43,7 @@ task runIntroServer(type: JavaExec) {
     mainClass = 'movies.IntroServer'
     jvmArgs = sharedJvmArgs + [
             "-Ddd.service=intro-movies-api-java",
+            "-Ddd.profiling.upload.period=10", // upload every 10s to see data faster
     ]
 }
 
@@ -55,6 +55,7 @@ task runServer(type: JavaExec) {
     mainClass = 'movies.Server'
     jvmArgs = sharedJvmArgs + [
         "-Ddd.service=movies-api-java",
+        "-Ddd.profiling.upload.period=10", // upload every 10s to see data faster
     ]
 }
 
@@ -66,6 +67,7 @@ task runTimelineServer(type: JavaExec) {
     mainClass = 'movies.Server'
     jvmArgs = sharedJvmArgs + [
             "-Ddd.service=movies-api-java-timeline",
+            "-Ddd.profiling.upload.period=10", // upload every 10s to see data faster
     ]
 }
 
@@ -78,6 +80,7 @@ task runLeakyServer(type: JavaExec) {
     jvmArgs = sharedJvmArgs + [
         "-Ddd.service=leaky-api-java",
         "-Ddd.profiling.ddprof.liveheap.enabled=true",
+        "-Ddd.profiling.upload.period=60", // we saw heap metric mess up with shorter period
     ]
 }
 
