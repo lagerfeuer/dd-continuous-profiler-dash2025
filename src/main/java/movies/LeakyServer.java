@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +39,28 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+class Metrics {
+	public Request req;
+	public String req_str;
+	public String metadata;
+	public Date date;
+
+	public Metrics(Request req) {
+		this.req = req;
+		this.req_str = new String("body: " + req.body()
+				+ " params: " + req.params().toString()
+				+ " headers: " + req.headers().toString()
+				+ " url: " + req.url()
+				+ " queryParams: " + req.queryParams().toString() + req.queryParams("q")
+				+ " attributes: " + req.attributes().toString()
+				+ " matchedPath: " + req.matchedPath());
+		this.date = new Date();
+		this.metadata = "x".repeat(1000);
+	}
+}
+
 public class LeakyServer {
-	private static List<String> REQUEST_METRICS = new LinkedList<String>();
+	private static List<Metrics> REQUEST_METRICS = new LinkedList<Metrics>();
 	private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 	private static final String MONGO_URI = System.getenv("MONGO_URI");
@@ -72,19 +93,9 @@ public class LeakyServer {
 				+ ProcessHandle.current().pid());
 	}
 
-	private static void collectMetrics(Request req) {
-		var req_str = new String("body: " + req.body() 
-				+ " params: " + req.params().toString() 
-				+ " headers: " + req.headers().toString() 
-				+ " url: " + req.url() 
-				+ " queryParams: " + req.queryParams().toString() + req.queryParams("q")
-				+ " attributes: " + req.attributes().toString()
-				+ " matchedPath: " + req.matchedPath());
-		var now = new java.util.Date();
-		var msg = "Saw " + req_str + " at: " + now;
-		LOG.info("msg: " + msg + " " + msg.length());
-		LOG.info("Stored requests " + REQUEST_METRICS.size());
-		REQUEST_METRICS.add(msg);
+	private static synchronized void collectMetrics(Request req) {
+		var metric = new Metrics(req);
+		REQUEST_METRICS.add(metric);
 	}
 
 	private static Object randomMovieEndpoint(Request req, Response res) {
