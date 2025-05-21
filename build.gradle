@@ -81,7 +81,6 @@ task runLeakyServer(type: JavaExec) {
         "-Ddd.service=leaky-api-java",
         "-Ddd.profiling.ddprof.liveheap.enabled=true",
         "-Ddd.profiling.upload.period=60", // we saw heap metric mess up with shorter period
-        "-XX:+UseZGC",
     ]
 }
 
