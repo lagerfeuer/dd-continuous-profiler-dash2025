@@ -46,7 +46,7 @@ public class IntroServer {
 	private static final Supplier<List<Movie>> MOVIES = cache(IntroServer::loadMovies);
 	private static final Supplier<List<Credit>> CREDITS = cache(IntroServer::loadCredits);
 	private static final int MOVIES_API_PORT = Integer.parseInt(System.getenv("MOVIES_API_PORT"));
-	// CREDITS_BY_MOVIE_ID goes in here!
+	private static final Supplier<Map<String, List<Credit>>> CREDITS_BY_MOVIE_ID = cache(() -> CREDITS.get().stream().collect(Collectors.groupingBy(c -> c.id)));
 
 	public static void main(String[] args) {
 		port(MOVIES_API_PORT);
@@ -116,7 +116,7 @@ public class IntroServer {
 	}
 
 	private static List<Credit> creditsForMovie(Movie movie) {
-		return CREDITS.get().stream().filter(c -> c.id.equals(movie.id)).toList();
+		return CREDITS_BY_MOVIE_ID.get().get(movie.id);
 	}
 
 	private static Map<CrewRole, Long> crewCountForMovie(List<Credit> credits) {
