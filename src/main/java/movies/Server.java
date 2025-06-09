@@ -234,12 +234,7 @@ public class Server {
 			Arrays.stream(CrewRole.class.getEnumConstants()).collect(Collectors.toMap(CrewRole::toString, Function.identity()));
 
 		public static CrewRole parseRole(String inputRole) {
-			try {
-				return CrewRole.valueOf(inputRole);
-			} catch (IllegalArgumentException e) {
-				LOG.trace("Unknown role", e);
-				return CrewRole.Other;
-			}
+			return ROLES_MAP.getOrDefault(inputRole, CrewRole.Other);
 		}
 	}
 	public record StatsResult(int matchedMovies, Map<CrewRole, Long> crewCount) { }
